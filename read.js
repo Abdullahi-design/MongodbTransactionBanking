@@ -21,7 +21,7 @@ async function main() {
         await client.connect();
 
         // check
-        await findName(client, "account2");
+        await findName(client, "account1");
 
     } finally {
         // Close the connection to the MongoDB cluster
