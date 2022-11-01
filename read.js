@@ -21,7 +21,7 @@ async function main() {
         await client.connect();
 
         // // check
-        await findName(client, "account2");
+        // await findName(client, "account2");
 
     } finally {
         // Close the connection to the MongoDB cluster
@@ -34,7 +34,7 @@ main().catch(console.error);
 async function findName(client, newListing) {
     const result = await client.db("banking").collection("accounts").findOne({ name: newListing });
     console.log(`Found listing(s) in the collection with the name ${newListing}`);
-    // console.log(result);
+    console.log(result);
     return result.balance
 }
 
