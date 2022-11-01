@@ -1,5 +1,7 @@
 const { MongoClient } = require('mongodb');
 require('dotenv').config();
+const { findName } = require('./read.js')
+
 
 // Check in the README.md file on how to run this script 
 
@@ -21,8 +23,12 @@ async function main() {
         // Connect to the MongoDB cluster
         await client.connect();
 
+        // Check account balance
+        const accountBalance = await findName(client, "account1");
+        // console.log(accountBalance);
+
         // Transfer $100 from "account1" to "account2"
-        await transferMoney(client, "account1", "account2", 100);
+        await transferMoney(client, accountBalance, "account1", "account2", 500);
 
     } finally {
         // Close the connection to the MongoDB cluster
@@ -32,7 +38,8 @@ async function main() {
 
 main().catch(console.error);
 
-async function transferMoney(client, account1, account2, amount) {
+
+async function transferMoney(client, accountBalance, account1, account2, amount) {
 
     /**
      * The accounts collection in the banking database
@@ -58,34 +65,49 @@ async function transferMoney(client, account1, account2, amount) {
 
             // Important:: You must pass the session to each of the operations   
 
-            // Remove the money from the first account
-            const subtractMoneyResults = await accountsCollection.updateOne(
-                { name: account1 },
-                { $inc: { balance: amount * -1 } }, // we might want to add charges and give customer a percentage
-                { session });
-            console.log(`${subtractMoneyResults.matchedCount} document(s) found in the accounts collection with _id ${account1}.`);
-            console.log(`${subtractMoneyResults.modifiedCount} document(s) was/were updated to remove the money.`);
-            if (subtractMoneyResults.modifiedCount !== 1) {
+            //First: checks if account is more than tha amount to be transfered
+            //Second: Remove the money from the first account
+
+            if(accountBalance < amount) {
                 await session.abortTransaction();
-                return;
+                console.log('Account is less than zero');
+            } else {
+                console.log('amount greater dan 0');
+                const subtractMoneyResults = await accountsCollection.updateOne(
+                    { name: account1 },
+                    { $inc: { balance: amount * -1 } }, // we might want to add charges and give customer a percentage
+                    { session });
+                    console.log(`your acc bal is ${accountBalance}`);
+                console.log(`${subtractMoneyResults.matchedCount} document(s) found in the accounts collection with _id ${account1}.`);
+                console.log(`${subtractMoneyResults.modifiedCount} document(s) was/were updated to remove the money.`);
+                if (subtractMoneyResults.modifiedCount !== 1 ) {
+                    await session.abortTransaction();
+                }
             }
+            
 
             // Add the money to the second account
-            const addMoneyResults = await accountsCollection.updateOne(
-                { name: account2 },
-                { $inc: { balance: amount } },
-                { session });
-            console.log(`${addMoneyResults.matchedCount} document(s) found in the accounts collection with _id ${account2}.`);
-            console.log(`${addMoneyResults.modifiedCount} document(s) was/were updated to add the money.`);
-            if (addMoneyResults.modifiedCount !== 1) {
-                await session.abortTransaction();
-                return;
+            if(accountBalance < amount) {
+                
+                console.log('money will not go');
+            } else{
+                const addMoneyResults = await accountsCollection.updateOne(
+                    { name: account2 },
+                    { $inc: { balance: amount } },
+                    { session });
+                console.log(`${addMoneyResults.matchedCount} document(s) found in the accounts collection with _id ${account2}.`);
+                console.log(`${addMoneyResults.modifiedCount} document(s) was/were updated to add the money.`);
+                if (addMoneyResults.modifiedCount !== 1 ) {
+                    await session.abortTransaction();
+                    
+                }
             }
 
         }, transactionOptions);
 
-        if (transactionResults) {
+        if (transactionResults, accountBalance) {
             console.log("The money was successfully transferred. Database operations from the transaction are now visible outside the transaction.");
+            console.log(`your new acc bal is ${accountBalance}`);
         } else {
             console.log("The money was not transferred. The transaction was intentionally aborted.");
         }
