@@ -40,7 +40,7 @@ async function updateList(client, accountName, balance) {
     console.log(`${result.matchedCount} document(s) matched the query criteria.`);
     console.log(`${result.modifiedCount} document(s) was/were updated.`);
 
-    console.log(result);
+    // console.log(result);
 }
 
 async function findListingByName(client, nameOfListing) {

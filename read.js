@@ -20,8 +20,8 @@ async function main() {
         // Connect to the MongoDB cluster
         await client.connect();
 
-        // check
-        await findName(client, "account1");
+        // // check
+        // await findName(client, "account2");
 
     } finally {
         // Close the connection to the MongoDB cluster
@@ -35,4 +35,7 @@ async function findName(client, newListing) {
     const result = await client.db("banking").collection("accounts").findOne({ name: newListing });
     console.log(`Found listing(s) in the collection with the name ${newListing}`);
     console.log(result);
+    return result.balance
 }
+
+module.exports = { findName }
