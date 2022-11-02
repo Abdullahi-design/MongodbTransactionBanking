@@ -27,8 +27,8 @@ async function main() {
         const accountBalance = await findName(client, "account1");
         // console.log(accountBalance);
 
-        // Transfer $100 from "account1" to "account2"
-        await transferMoney(client, accountBalance, "account1", "account2", 500);
+        // Transfer $100 from "account1" to "account2" and account1 gets a 2% cash back
+        await transferMoney(client, accountBalance, 0.02, "account1", "account2", 50);
 
     } finally {
         // Close the connection to the MongoDB cluster
@@ -39,12 +39,13 @@ async function main() {
 main().catch(console.error);
 
 
-async function transferMoney(client, accountBalance, account1, account2, amount) {
+async function transferMoney(client, accountBalance, cashBack, account1, account2, amount) {
 
     /**
      * The accounts collection in the banking database
      */
     const accountsCollection = client.db("banking").collection("accounts");
+
 
     // Step 1: Start a Client Session
     // See https://mongodb.github.io/node-mongodb-native/3.6/api/MongoClient.html#startSession for the startSession() docs
@@ -95,13 +96,36 @@ async function transferMoney(client, accountBalance, account1, account2, amount)
                     { name: account2 },
                     { $inc: { balance: amount } },
                     { session });
-                console.log(`${addMoneyResults.matchedCount} document(s) found in the accounts collection with _id ${account2}.`);
-                console.log(`${addMoneyResults.modifiedCount} document(s) was/were updated to add the money.`);
+                console.log(`${addMoneyResults.matchedCount} account found in the accounts collection with _id ${account2}.`);
+                console.log(`${addMoneyResults.modifiedCount} account(s) was/were updated to add the money.`);
                 if (addMoneyResults.modifiedCount !== 1 ) {
                     await session.abortTransaction();
                     
                 }
             }
+
+                
+            //2% cash back on amount transfered
+                 
+             if(amount > 49 && accountBalance > 49) {
+                const percentageBonus = cashBack * amount
+             
+                const addPercentageBonus = await accountsCollection.updateOne(
+                    { name: account1 },
+                    { $inc: { balance: percentageBonus } },
+                    { session });
+                console.log(`you have a cash bonus of ${percentageBonus}`);
+                console.log(`${addPercentageBonus.matchedCount} account found in the accounts collection with _id ${account1}.`);
+                console.log(`Bonus was added to ${addPercentageBonus.modifiedCount} account`);
+                
+                if (addPercentageBonus.modifiedCount !== 1 ) {
+                    await session.abortTransaction();
+                    
+                }
+             } else {
+                console.log(`oops!! transfer more than 50 to get a bonus`);
+             }
+             
 
         }, transactionOptions);
 
