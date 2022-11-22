@@ -20,8 +20,8 @@ async function main() {
         // Connect to the MongoDB cluster
         await client.connect();
 
-        // // check
-        // await findName(client, "account2");
+        // 🍁 uncomment line below to read account 🌿 //
+        await findName(client, "account1");
 
     } finally {
         // Close the connection to the MongoDB cluster
