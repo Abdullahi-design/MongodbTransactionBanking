@@ -37,5 +37,5 @@ main().catch(console.error);
 async function createObject(client, newListing) {
     const result = await client.db("banking").collection("accounts").insertMany(newListing);
     console.log(`${result.insertedCount} new listing(s) created with the following id(s):`);
-    console.log(result.insertedIds);''
+    console.log(result.insertedIds);
 }
